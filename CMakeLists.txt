@@ -10,8 +10,8 @@ include_directories(headers)
 
 add_executable(App 
         main.cpp
-        src/time.cpp src/utils.cpp src/renderer.cpp src/engine.cpp
-        entt/entt.hpp headers/time.hpp headers/utils.hpp headers/renderer.hpp headers/engine.hpp
+        src/time.cpp src/utils.cpp src/renderer.cpp src/game.cpp src/engine.cpp
+        entt/entt.hpp headers/time.hpp headers/utils.hpp headers/renderer.hpp headers/game.hpp headers/engine.hpp
     )
 
 set_target_properties(App PROPERTIES

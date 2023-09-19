@@ -13,6 +13,7 @@
 
 #include "engine.hpp"
 #include "time.hpp"
+#include "game.hpp"
 
 // If using Dawn
 #ifndef WEBGPU_BACKEND_DAWN
@@ -43,7 +44,7 @@ void createWindow(GLFWwindow** window)
 Engine::Engine()
 {
     createWindow(&window);
-
+    game::Game game;
     //Renderer rend(window);
     //renderer = &rend;
     double lastFrameTime = glfwGetTime(); // Time of last frame
@@ -55,7 +56,7 @@ Engine::Engine()
         engine::time::timeSinceStart = currTime;
         lastFrameTime = currTime;
         // update
-        std::cout << engine::time::timeSinceStart << " " << engine::time::deltaTime << std::endl;
+        game.update();
 
         // Do nothing, this checks for ongoing asynchronous operations and call their callbacks
         #ifdef WEBGPU_BACKEND_WGPU
