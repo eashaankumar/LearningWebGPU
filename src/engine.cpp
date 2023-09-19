@@ -13,6 +13,7 @@
 
 Engine::Engine()
 {
+
     #pragma region Init GLFW
     if(!glfwInit())
     {
@@ -29,20 +30,26 @@ Engine::Engine()
         throw std::exception();
     }
     #pragma endregion
-    renderer = std::make_unique<Renderer>(new Renderer((GLFWwindow *)window));
-}
 
-Engine::~Engine()
-{
-    renderer.reset();
+    Renderer rend(window);
+    renderer = &rend;
+
+    while (!glfwWindowShouldClose(window)) {
+        // Do nothing, this checks for ongoing asynchronous operations and call their callbacks
+        #ifdef WEBGPU_BACKEND_WGPU
+            // Non-standardized behavior: submit empty queue to flush callbacks
+            // (wgpu-native also has a wgpuDevicePoll but its API is more complex)
+            wgpuQueueSubmit(queue, 0, nullptr);
+        #else
+            // Non-standard Dawn way
+            WGPUDevice d = *(renderer->device);
+            wgpuDeviceTick( d );
+        #endif
+        std::cout << "WORKS" << std::endl;
+	    glfwPollEvents();
+    	renderer->render(WGPUColor{ 0.9, 0.2, 0.2, 1.0 });	
+	}
     glfwDestroyWindow(window);
     glfwTerminate();
 }
 
-void Engine::start()
-{
-    while (!glfwWindowShouldClose(window)) {
-	    glfwPollEvents();
-    	renderer->render(WGPUColor{ 0.9, 0.2, 0.2, 1.0 });	
-	}
-}

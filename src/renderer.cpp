@@ -3,8 +3,17 @@
 #include "renderer.hpp"
 #include "utils.hpp"
 
+void setDefault(WGPULimits &limits) {
+    limits.maxTextureDimension1D = 0;
+    limits.maxTextureDimension2D = 0;
+    limits.maxTextureDimension3D = 0;
+    limits.maxBufferSize = 0;
+    // [...] Set everything to 0 to mean "no limit"
+}
+
 Renderer::Renderer(GLFWwindow* window)
 {
+
     #pragma region Init WebGPU
     WGPUInstanceDescriptor desc = {};
     desc.nextInChain = nullptr;
@@ -47,17 +56,20 @@ Renderer::Renderer(GLFWwindow* window)
     #pragma region device
     std::cout << "Requesting device..." << std::endl;
 
+
     WGPUDeviceDescriptor deviceDesc = {};
-    device = std::make_unique<WGPUDevice>(requestDevice(*adapter, &deviceDesc));
-
-    std::cout << "Got device: " << device << std::endl;
-
+    
     deviceDesc.nextInChain = nullptr;
     deviceDesc.label = "My Device"; // anything works here, that's your call
     deviceDesc.requiredFeaturesCount = 0; // we do not require any specific feature
     deviceDesc.requiredLimits = nullptr; // we do not require any specific limit
     deviceDesc.defaultQueue.nextInChain = nullptr;
     deviceDesc.defaultQueue.label = "The default queue";
+
+    device = std::make_unique<WGPUDevice>(requestDevice(*adapter, &deviceDesc));
+
+    std::cout << "Got device: " << device << std::endl;
+
 
     auto onDeviceError = [](WGPUErrorType type, char const* message, void* /* pUserData */) {
         std::cout << "Uncaptured device error: type " << type;
@@ -107,7 +119,7 @@ fn vs_main(@builtin(vertex_index) in_vertex_index: u32) -> @builtin(position) ve
 
 @fragment
 fn fs_main() -> @location(0) vec4f {
-    return vec4f(0.0, 0.4, 1.0, 1.0);
+    return vec4f(0.0, 1.0, 1.0, 1.0);
 }
 )";
 

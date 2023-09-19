@@ -4,7 +4,7 @@
 #include "renderer.hpp"
 
 
-struct DestroyglfwWin{
+/*struct DestroyglfwWin{
 
     void operator()(GLFWwindow* ptr){
          glfwDestroyWindow(ptr);
@@ -12,16 +12,14 @@ struct DestroyglfwWin{
 
 };
 
-typedef std::unique_ptr<GLFWwindow, DestroyglfwWin> smart_GLFWwindow;
+typedef std::unique_ptr<GLFWwindow, DestroyglfwWin> smart_GLFWwindow;*/
 
 class Engine
 {
 public:
     Engine();
-    ~Engine();
-    void start();
 private:
-    std::unique_ptr<Renderer> renderer;
-    GLFWwindow *window;
+    Renderer* renderer;
+    GLFWwindow* window;
 };
 #endif
