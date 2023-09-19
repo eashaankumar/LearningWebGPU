@@ -12,15 +12,18 @@
 #pragma warning(pop)
 
 #include "engine.hpp"
+#include "time.hpp"
 
 // If using Dawn
 #ifndef WEBGPU_BACKEND_DAWN
 #define WEBGPU_BACKEND_DAWN
 #endif
 
-Engine::Engine()
+namespace engine
 {
-    #pragma region Init GLFW
+
+void createWindow(GLFWwindow** window)
+{
     if(!glfwInit())
     {
         std::cerr<< "Could not init GLFW!" << std::endl;
@@ -28,19 +31,32 @@ Engine::Engine()
     }
 
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API); // NEW
-    window = glfwCreateWindow(640, 480, "Learn WebGPU", NULL, NULL);
+    *window = glfwCreateWindow(640, 480, "Learn WebGPU", NULL, NULL);
     if (!window)
     {
         std::cerr<<"Could not create window!" << std::endl;
         glfwTerminate();
         throw std::exception();
     }
-    #pragma endregion
+}
+
+Engine::Engine()
+{
+    createWindow(&window);
 
     //Renderer rend(window);
     //renderer = &rend;
-
+    double lastFrameTime = glfwGetTime(); // Time of last frame
+    engine::time::timeSinceStart = lastFrameTime;
     while (!glfwWindowShouldClose(window)) {
+        glfwPollEvents();
+        double currTime = glfwGetTime();
+        engine::time::deltaTime = currTime - lastFrameTime;
+        engine::time::timeSinceStart = currTime;
+        lastFrameTime = currTime;
+        // update
+        std::cout << engine::time::timeSinceStart << " " << engine::time::deltaTime << std::endl;
+
         // Do nothing, this checks for ongoing asynchronous operations and call their callbacks
         #ifdef WEBGPU_BACKEND_WGPU
             // Non-standardized behavior: submit empty queue to flush callbacks
@@ -51,10 +67,10 @@ Engine::Engine()
             //WGPUDevice d = *(renderer->device);
             //wgpuDeviceTick( d );
         #endif
-	    glfwPollEvents();
     	//renderer->render(WGPUColor{ 0.9, 0.2, 0.2, 1.0 });	
 	}
     glfwDestroyWindow(window);
     glfwTerminate();
 }
 
+}

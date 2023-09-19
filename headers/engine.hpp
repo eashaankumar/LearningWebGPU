@@ -14,6 +14,8 @@
 
 typedef std::unique_ptr<GLFWwindow, DestroyglfwWin> smart_GLFWwindow;*/
 
+namespace engine
+{
 class Engine
 {
 public:
@@ -22,4 +24,5 @@ private:
     Renderer* renderer;
     GLFWwindow* window;
 };
+}
 #endif
