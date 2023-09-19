@@ -2,3 +2,5 @@ build/
 glfw/
 glfw3webgpu/
 webgpu/
+glm/
+entt/

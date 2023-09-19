@@ -3,6 +3,13 @@
 #include <webgpu/webgpu.hpp>
 #include <glfw3webgpu.h>
 #include <vector>
+#include <entt/entt.hpp>
+
+#pragma warning(push)
+#pragma warning(disable:4201)   // suppress even more warnings about nameless structs
+#include<glm/glm.hpp>
+#include <glm/gtx/string_cast.hpp>
+#pragma warning(pop)
 
 #include "engine.hpp"
 
@@ -13,7 +20,6 @@
 
 Engine::Engine()
 {
-
     #pragma region Init GLFW
     if(!glfwInit())
     {
@@ -31,8 +37,8 @@ Engine::Engine()
     }
     #pragma endregion
 
-    Renderer rend(window);
-    renderer = &rend;
+    //Renderer rend(window);
+    //renderer = &rend;
 
     while (!glfwWindowShouldClose(window)) {
         // Do nothing, this checks for ongoing asynchronous operations and call their callbacks
@@ -42,12 +48,11 @@ Engine::Engine()
             wgpuQueueSubmit(queue, 0, nullptr);
         #else
             // Non-standard Dawn way
-            WGPUDevice d = *(renderer->device);
-            wgpuDeviceTick( d );
+            //WGPUDevice d = *(renderer->device);
+            //wgpuDeviceTick( d );
         #endif
-        std::cout << "WORKS" << std::endl;
 	    glfwPollEvents();
-    	renderer->render(WGPUColor{ 0.9, 0.2, 0.2, 1.0 });	
+    	//renderer->render(WGPUColor{ 0.9, 0.2, 0.2, 1.0 });	
 	}
     glfwDestroyWindow(window);
     glfwTerminate();

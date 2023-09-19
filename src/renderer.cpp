@@ -11,6 +11,18 @@ void setDefault(WGPULimits &limits) {
     // [...] Set everything to 0 to mean "no limit"
 }
 
+void setDefaults(WGPUAdapter adapter, WGPUDevice device)
+{
+    WGPUSupportedLimits supportedLimits{};
+    supportedLimits.nextInChain = nullptr;
+
+    wgpuAdapterGetLimits(adapter, &supportedLimits);
+    std::cout << "adapter.maxVertexAttributes: " << supportedLimits.limits.maxVertexAttributes << std::endl;
+
+    wgpuDeviceGetLimits(device, &supportedLimits);
+    std::cout << "device.maxVertexAttributes: " << supportedLimits.limits.maxVertexAttributes << std::endl;
+}
+
 Renderer::Renderer(GLFWwindow* window)
 {
 
@@ -56,20 +68,38 @@ Renderer::Renderer(GLFWwindow* window)
     #pragma region device
     std::cout << "Requesting device..." << std::endl;
 
+    WGPUSupportedLimits supportedLimits;
+    wgpuAdapterGetLimits(*adapter, &supportedLimits);
 
+	std::cout << "Requesting device..." << std::endl;
+	// Don't forget to = Default
+	WGPURequiredLimits requiredLimits; // = Default?
+	// We use at most 1 vertex attribute for now
+	requiredLimits.limits.maxVertexAttributes = 1;
+	// We should also tell that we use 1 vertex buffers
+	requiredLimits.limits.maxVertexBuffers = 1;
+	// Maximum size of a buffer is 6 vertices of 2 float each
+	requiredLimits.limits.maxBufferSize = 6 * 2 * sizeof(float);
+	// Maximum stride between 2 consecutive vertices in the vertex buffer
+	requiredLimits.limits.maxVertexBufferArrayStride = 2 * sizeof(float);
+	// This must be set even if we do not use storage buffers for now
+	requiredLimits.limits.minStorageBufferOffsetAlignment = supportedLimits.limits.minStorageBufferOffsetAlignment;
+	// This must be set even if we do not use uniform buffers for now
+	requiredLimits.limits.minUniformBufferOffsetAlignment = supportedLimits.limits.minUniformBufferOffsetAlignment;
+    
     WGPUDeviceDescriptor deviceDesc = {};
     
     deviceDesc.nextInChain = nullptr;
     deviceDesc.label = "My Device"; // anything works here, that's your call
     deviceDesc.requiredFeaturesCount = 0; // we do not require any specific feature
-    deviceDesc.requiredLimits = nullptr; // we do not require any specific limit
+    deviceDesc.requiredLimits = &requiredLimits; // we do not require any specific limit
     deviceDesc.defaultQueue.nextInChain = nullptr;
     deviceDesc.defaultQueue.label = "The default queue";
 
     device = std::make_unique<WGPUDevice>(requestDevice(*adapter, &deviceDesc));
 
     std::cout << "Got device: " << device << std::endl;
-
+    setDefaults(*adapter, *device);
 
     auto onDeviceError = [](WGPUErrorType type, char const* message, void* /* pUserData */) {
         std::cout << "Uncaptured device error: type " << type;
@@ -105,16 +135,8 @@ Renderer::Renderer(GLFWwindow* window)
     	std::cout << "Creating shader module..." << std::endl;
 	const char* shaderSource = R"(
 @vertex
-fn vs_main(@builtin(vertex_index) in_vertex_index: u32) -> @builtin(position) vec4<f32> {
-	var p = vec2f(0.0, 0.0);
-	if (in_vertex_index == 0u) {
-		p = vec2f(-0.5, -0.5);
-	} else if (in_vertex_index == 1u) {
-		p = vec2f(0.5, -0.5);
-	} else {
-		p = vec2f(0.0, 0.5);
-	}
-	return vec4f(p, 0.0, 1.0);
+fn vs_main(@location(0) in_vertex_position: vec2f) -> @builtin(position) vec4f {
+    return vec4f(in_vertex_position, 0.0, 1.0);
 }
 
 @fragment
@@ -141,6 +163,25 @@ fn fs_main() -> @location(0) vec4f {
 	// Setup the actual payload of the shader code descriptor
 	shaderCodeDesc.code = shaderSource;
 
+    // Vertex fetch
+    WGPUVertexAttribute vertexAttrib;
+    // == Per attribute ==
+    // Corresponds to @location(...)
+    vertexAttrib.shaderLocation = 0;
+    // Means vec2f in the shader
+    vertexAttrib.format = WGPUVertexFormat_Float32x2;
+    // Index of the first element
+    vertexAttrib.offset = 0;
+
+    WGPUVertexBufferLayout vertexBufferLayout{};
+    //vertexBufferLayout.nextInChain = nullptr;
+    vertexBufferLayout.attributeCount = 1;
+    vertexBufferLayout.attributes = &vertexAttrib;
+    // == Common to attributes from the same buffer ==
+    vertexBufferLayout.arrayStride = 2 * sizeof(float);
+    vertexBufferLayout.stepMode = WGPUVertexStepMode_Vertex;
+    // [...] Build vertex buffer layout
+
 	WGPUShaderModule shaderModule = wgpuDeviceCreateShaderModule(*device, &shaderDesc);
 	std::cout << "Shader module: " << shaderModule << std::endl;
 	std::cout << "Creating render pipeline..." << std::endl;
@@ -149,8 +190,8 @@ fn fs_main() -> @location(0) vec4f {
 
 	// Vertex fetch
 	// (We don't use any input buffer so far)
-	pipelineDesc.vertex.bufferCount = 0;
-	pipelineDesc.vertex.buffers = nullptr;
+	pipelineDesc.vertex.bufferCount = 1;
+	pipelineDesc.vertex.buffers = &vertexBufferLayout;
 
 	// Vertex shader
 	pipelineDesc.vertex.module = shaderModule;
@@ -237,6 +278,41 @@ Renderer::~Renderer()
     // remove pipeline from device?    
 }
 
+void draw(WGPUQueue queue, WGPUDevice device, WGPURenderPassEncoder renderPass)
+{
+    // Vertex buffer
+    // There are 2 floats per vertex, one for x and one for y.
+    // But in the end this is just a bunch of floats to the eyes of the GPU,
+    // the *layout* will tell how to interpret this.
+    std::vector<float> vertexData = {
+        // x0, y0
+        -0.5, -0.5,
+
+        // x1, y1
+        +0.5, -0.5,
+
+        // x2, y2
+        +0.0, +0.5
+    };
+    int vertexCount = static_cast<int>(vertexData.size() / 2);
+    // Create vertex buffer
+    WGPUBufferDescriptor bufferDesc{};
+    bufferDesc.nextInChain = nullptr;
+    bufferDesc.size = vertexData.size() * sizeof(float);
+    bufferDesc.usage = WGPUBufferUsage_CopyDst | WGPUBufferUsage_Vertex;
+    bufferDesc.mappedAtCreation = false;
+    WGPUBuffer vertexBuffer = wgpuDeviceCreateBuffer(device, &bufferDesc);
+
+    // Upload geometry data to the buffer
+    wgpuQueueWriteBuffer(queue, vertexBuffer, 0, vertexData.data(), bufferDesc.size);
+
+    // Set vertex buffer while encoding the render pass
+    wgpuRenderPassEncoderSetVertexBuffer(renderPass, 0, vertexBuffer, 0, vertexData.size() * sizeof(float));
+
+    // We use the `vertexCount` variable instead of hard-coding the vertex count
+    wgpuRenderPassEncoderDraw(renderPass, vertexCount, 1, 0, 0);
+}
+
 void Renderer::render(WGPUColor clearColor)
 {
     WGPUTextureView nextTexture = wgpuSwapChainGetCurrentTextureView(*swapChain);
@@ -271,7 +347,8 @@ void Renderer::render(WGPUColor clearColor)
     // Select which render pipeline to use
     wgpuRenderPassEncoderSetPipeline(renderPass, *pipeline);
     // Draw 1 instance of a 3-vertices shape
-    wgpuRenderPassEncoderDraw(renderPass, 3, 1, 0, 0);
+    //wgpuRenderPassEncoderDraw(renderPass, 3, 1, 0, 0);
+    draw(*queue, *device, renderPass);
 
     wgpuRenderPassEncoderEnd(renderPass);
     
