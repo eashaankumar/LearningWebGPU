@@ -214,13 +214,15 @@ fn fs_main() -> @location(0) vec4f {
 
 }
 
-void Renderer::cleanup()
+Renderer::~Renderer()
 {
     wgpuSwapChainRelease(*swapChain);
     wgpuDeviceRelease(*device);
     wgpuAdapterRelease(*adapter);
     wgpuSurfaceRelease(*surface);
     wgpuInstanceRelease(*instance);
+    wgpuQueueReference(*queue);
+    // remove pipeline from device?    
 }
 
 void Renderer::render(WGPUColor clearColor)

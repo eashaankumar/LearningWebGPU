@@ -2,22 +2,12 @@
 #include <memory>
 #include <glfw/glfw3.h>
 
-/*struct DestroyglfwWin{
-
-    void operator()(GLFWwindow* ptr){
-         glfwDestroyWindow(ptr);
-    }
-
-};
-
-typedef std::unique_ptr<GLFWwindow, DestroyglfwWin> smart_GLFWwindow;*/
-
 class Renderer
 {
 public:
     Renderer(GLFWwindow*);
+    ~Renderer();
     void render(WGPUColor color);
-    void cleanup();
 private:
     std::unique_ptr<WGPUSwapChain> swapChain;
     std::unique_ptr<WGPUDevice> device;

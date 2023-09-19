@@ -8,7 +8,8 @@ include_directories(headers)
 
 add_executable(App 
         main.cpp
-        src/utils.cpp src/renderer.cpp headers/utils.hpp headers/renderer.hpp
+        src/utils.cpp src/renderer.cpp src/engine.cpp
+        headers/utils.hpp headers/renderer.hpp headers/engine.hpp
     )
 
 set_target_properties(App PROPERTIES
