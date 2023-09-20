@@ -2,14 +2,6 @@
 #include <glfw/glfw3.h>
 #include <webgpu/webgpu.hpp>
 #include <glfw3webgpu.h>
-#include <vector>
-#include <entt/entt.hpp>
-
-#pragma warning(push)
-#pragma warning(disable:4201)   // suppress even more warnings about nameless structs
-#include<glm/glm.hpp>
-#include <glm/gtx/string_cast.hpp>
-#pragma warning(pop)
 
 #include "engine.hpp"
 #include "time.hpp"

@@ -36,3 +36,5 @@ endif()
 
 
 target_copy_webgpu_binaries(App)
+
+set_property(TARGET App PROPERTY COMPILE_WARNING_AS_ERROR OFF)
