@@ -41,12 +41,23 @@ Engine::Engine()
     //renderer = &rend;
     double lastFrameTime = glfwGetTime(); // Time of last frame
     engine::time::timeSinceStart = lastFrameTime;
+    double timeElapsedSinceLastSecond = 0;
+    int framesElapsedSinceLastSecond = 0;
     while (!glfwWindowShouldClose(window)) {
         glfwPollEvents();
         double currTime = glfwGetTime();
         engine::time::deltaTime = currTime - lastFrameTime;
         engine::time::timeSinceStart = currTime;
         lastFrameTime = currTime;
+
+        timeElapsedSinceLastSecond += engine::time::deltaTime;
+        framesElapsedSinceLastSecond++;
+        if (timeElapsedSinceLastSecond >= 1)
+        {
+            engine::time::framesPerSecond = framesElapsedSinceLastSecond;
+            timeElapsedSinceLastSecond = 0;
+            framesElapsedSinceLastSecond = 0;
+        }
         // update
         game.update();
 

@@ -5,6 +5,7 @@ namespace engine::time
 {
     extern double deltaTime;
     extern double timeSinceStart;
+    extern int framesPerSecond;
 }
 
 

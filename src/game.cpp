@@ -1,6 +1,4 @@
 #include <iostream>
-
-
 #include "game.hpp"
 #include "time.hpp"
 
@@ -8,14 +6,6 @@ using namespace engine::game;
 
 Game::Game()
 {
-    entt::entity entity = m_registry.create();
-    m_registry.emplace<TransformComponent>(entity, glm::mat3(1.0f));
-    
-    if (m_registry.all_of<TransformComponent>(entity))
-    {
-        std::cout << "Found component in registry" << std::endl;
-        TransformComponent& transform = m_registry.get<TransformComponent>(entity);
-    }
 }
 
 Game::~Game()
@@ -23,14 +13,27 @@ Game::~Game()
 
 }
 
-void Game::update()
+void updateEntities(entt::registry& registry)
 {
-    auto view = m_registry.view<TransformComponent>();
+    auto view = registry.view<TransformComponent>();
     for(auto entity: view)
     {
         // update
-        TransformComponent& transform = m_registry.get<TransformComponent>(entity);
+        TransformComponent& transform = registry.get<TransformComponent>(entity);
     }
+}
 
-    std::cout << "Game Update " << time::timeSinceStart << std::endl;
+void addEntity(entt::registry& registry, TransformComponent transform)
+{
+    entt::entity entity = registry.create();
+    registry.emplace<TransformComponent>(entity, transform);
+}
+
+void Game::update()
+{
+    addEntity(m_registry, glm::mat4(1.0f));
+    updateEntities(m_registry);
+
+    if ( (int)time::timeSinceStart % 5 == 0)
+        std::cout << "Entities: " << m_registry.size() << " FPS: " << time::framesPerSecond << std::endl;
 }
